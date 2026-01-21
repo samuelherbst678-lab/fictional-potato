@@ -2,9 +2,10 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Wahlzettel – Web App</title>
+<title>Wahlzettel Web App</title>
 
 <style>
+/* ===== SCREEN ===== */
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
@@ -18,29 +19,30 @@ header {
   text-align: center;
 }
 
-select {
-  font-size: 16px;
-  padding: 6px;
+select, input, button {
+  font-size: 15px;
+  padding: 5px;
 }
+
+button { cursor: pointer; }
 
 .page {
   max-width: 900px;
   margin: 20px auto;
   background: white;
   padding: 30px;
-  min-height: 90vh;
 }
 
-.hidden {
-  display: none;
-}
+.hidden { display: none; }
 
 h2 {
-  border-bottom: 2px solid #000;
+  border-bottom: 2px solid black;
   padding-bottom: 5px;
 }
 
-.ballot {
+.controls { margin-bottom: 20px; }
+
+.ballot-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 30px;
@@ -48,36 +50,89 @@ h2 {
 
 .vote-box {
   border: 2px solid black;
-  padding: 15px;
+  padding: 20px;
 }
 
-.vote-item {
+.vote-row {
   display: grid;
-  grid-template-columns: 30px 1fr 150px;
+  grid-template-columns: 40px 1fr 140px;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
-.vote-item input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
+/* Kreuz */
+.cross {
+  width: 28px;
+  height: 28px;
+  border: 2px solid black;
+  cursor: pointer;
+  position: relative;
 }
 
-.vote-item input[type="text"],
-.vote-item input[type="number"] {
-  width: 100%;
-  padding: 4px;
+.cross.active::before,
+.cross.active::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 12px;
+  width: 2px;
+  height: 22px;
+  background: black;
 }
 
-.free-list .vote-item {
-  grid-template-columns: 30px 1fr;
+.cross.active::before { transform: rotate(45deg); }
+.cross.active::after  { transform: rotate(-45deg); }
+
+/* Amtliche Hinweise */
+.notice {
+  border: 1px solid #999;
+  padding: 10px;
+  margin: 15px 0;
+  font-size: 14px;
+  background: #fafafa;
 }
 
-footer {
-  text-align: center;
-  font-size: 12px;
-  margin-top: 40px;
-  color: #555;
+.notice[contenteditable="true"]:focus {
+  outline: 2px dashed #666;
+}
+
+/* ===== PRINT ===== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 20mm;
+  }
+
+  header, .controls, button, footer {
+    display: none !important;
+  }
+
+  body { background: white; }
+
+  .page {
+    margin: 0;
+    padding: 0;
+  }
+
+  .notice {
+    border: 1px solid black;
+    background: white;
+    color: black;
+  }
+
+  input {
+    border: none;
+  }
+
+  #bundestag,
+  #cross,
+  #number {
+    page-break-after: always;
+  }
+
+  #number {
+    page-break-after: auto;
+  }
 }
 </style>
 </head>
@@ -85,104 +140,186 @@ footer {
 <body>
 
 <header>
-  <h1>Wahlzettel Web App</h1>
+  <h1>Wahlzettel</h1>
   <label>
-    Wahlzettel-Typ:
+    Wahlzettel:
     <select onchange="switchBallot(this.value)">
-      <option value="bundestag">Bundestagswahl (Erst- & Zweitstimme)</option>
-      <option value="free">Freier Wahlzettel</option>
+      <option value="bundestag">Bundestagswahl</option>
+      <option value="cross">Einzelstimmzettel (Kreuz)</option>
+      <option value="number">Stimmenzahl-Wahl</option>
     </select>
   </label>
 </header>
 
 <div class="page">
 
-<!-- BUNDESTAGSWAHL -->
+<div class="controls">
+  Kandidaten gesamt:
+  <input type="number" min="1" value="5" onchange="generateAll(this.value)">
+  &nbsp;
+  <button onclick="window.print()">🖨️ Drucken</button>
+</div>
+
+<!-- BUNDESTAG -->
 <div id="bundestag">
+  <h2>Stimmzettel zur Bundestagswahl</h2>
 
-<h2>Stimmzettel zur Bundestagswahl</h2>
-
-<div class="ballot">
-
-<div class="vote-box">
-  <h3>Erststimme</h3>
-
-  <div class="vote-item">
-    <input type="checkbox">
-    <input type="text" placeholder="Name des Kandidaten">
-    <input type="text" placeholder="Partei">
+  <div class="notice" contenteditable="true">
+    Sie haben eine Erststimme und eine Zweitstimme.
+    <br>In jeder Spalte dürfen Sie jeweils nur ein Kreuz setzen.
   </div>
 
-  <div class="vote-item">
-    <input type="checkbox">
-    <input type="text" placeholder="Name des Kandidaten">
-    <input type="text" placeholder="Partei">
+  <div class="ballot-grid">
+    <div class="vote-box">
+      <h3>Erststimme</h3>
+      <div id="erst"></div>
+    </div>
+    <div class="vote-box">
+      <h3>Zweitstimme</h3>
+      <div id="zweit"></div>
+    </div>
   </div>
-
 </div>
 
-<div class="vote-box">
-  <h3>Zweitstimme</h3>
+<!-- KREUZWAHL -->
+<div id="cross" class="hidden">
+  <h2>Einzelstimmzettel – Kreuzwahl</h2>
 
-  <div class="vote-item">
-    <input type="checkbox">
-    <input type="text" placeholder="Partei">
-    <input type="text" placeholder="Kurzname">
+  <p>
+    Maximal vergebbare Stimmen:
+    <input type="number" min="1" value="1" id="crossLimit" onchange="updateCrossNotice()">
+  </p>
+
+  <div class="notice" id="crossNotice" contenteditable="true">
+    Sie haben eine Stimme.
+    <br>Setzen Sie höchstens ein Kreuz.
   </div>
 
-  <div class="vote-item">
-    <input type="checkbox">
-    <input type="text" placeholder="Partei">
-    <input type="text" placeholder="Kurzname">
+  <div class="vote-box" id="crossBox"></div>
+</div>
+
+<!-- ZAHLENWAHL -->
+<div id="number" class="hidden">
+  <h2>Stimmenzahl eintragen</h2>
+
+  <div class="notice" contenteditable="true">
+    Tragen Sie bei den Kandidaten die gewünschte Stimmenzahl ein.
+    <br>Beachten Sie die geltenden Höchstzahlen.
   </div>
 
+  <div class="vote-box" id="numberBox"></div>
 </div>
 
-</div>
-</div>
-
-<!-- FREIER WAHLZETTEL -->
-<div id="free" class="hidden">
-
-<h2>Freier Wahlzettel</h2>
-
-<p>Gesamtstimmen:
-  <input type="number" value="3" min="1">
-</p>
-
-<div class="vote-box free-list">
-
-  <div class="vote-item">
-    <input type="checkbox">
-    <input type="text" placeholder="Kandidat / Option">
-  </div>
-
-  <div class="vote-item">
-    <input type="checkbox">
-    <input type="text" placeholder="Kandidat / Option">
-  </div>
-
-  <div class="vote-item">
-    <input type="checkbox">
-    <input type="text" placeholder="Kandidat / Option">
-  </div>
-
-</div>
-
-</div>
-
-<footer>
+<footer style="text-align:center;font-size:12px;color:#555;margin-top:40px">
   Muster-Wahlzettel – keine echte Wahl
 </footer>
 
 </div>
 
 <script>
-function switchBallot(type) {
-  document.getElementById("bundestag").classList.add("hidden");
-  document.getElementById("free").classList.add("hidden");
-  document.getElementById(type).classList.remove("hidden");
+let count = 5;
+
+function switchBallot(id) {
+  ["bundestag","cross","number"].forEach(x =>
+    document.getElementById(x).classList.add("hidden")
+  );
+  document.getElementById(id).classList.remove("hidden");
 }
+
+function generateAll(c) {
+  count = c;
+  drawBundestag();
+  drawCross();
+  drawNumber();
+}
+
+function drawBundestag() {
+  drawSingle("erst", "Kandidat", "Partei");
+  drawSingle("zweit", "Partei", "Kurzname");
+}
+
+function drawSingle(target, p1, p2) {
+  const box = document.getElementById(target);
+  box.innerHTML = "";
+  for (let i = 1; i <= count; i++) {
+    const row = document.createElement("div");
+    row.className = "vote-row";
+
+    const cross = createCross(() => {
+      box.querySelectorAll(".cross").forEach(c => c.classList.remove("active"));
+      cross.classList.add("active");
+    });
+
+    row.appendChild(cross);
+    row.appendChild(textInput(`${p1} ${i}`));
+    row.appendChild(textInput(p2));
+    box.appendChild(row);
+  }
+}
+
+function drawCross() {
+  const box = document.getElementById("crossBox");
+  box.innerHTML = "";
+  for (let i = 1; i <= count; i++) {
+    const row = document.createElement("div");
+    row.className = "vote-row";
+
+    const cross = createCross(() => {
+      const limit = parseInt(document.getElementById("crossLimit").value);
+      const active = box.querySelectorAll(".cross.active").length;
+      if (cross.classList.contains("active")) {
+        cross.classList.remove("active");
+      } else if (active < limit) {
+        cross.classList.add("active");
+      }
+    });
+
+    row.appendChild(cross);
+    row.appendChild(textInput(`Kandidat ${i}`));
+    row.appendChild(document.createElement("div"));
+    box.appendChild(row);
+  }
+}
+
+function updateCrossNotice() {
+  const limit = document.getElementById("crossLimit").value;
+  const notice = document.getElementById("crossNotice");
+  notice.innerHTML =
+    `Sie haben ${limit} Stimme${limit > 1 ? "n" : ""}.<br>` +
+    `Setzen Sie höchstens ${limit} Kreuz${limit > 1 ? "e" : ""}.`;
+}
+
+function drawNumber() {
+  const box = document.getElementById("numberBox");
+  box.innerHTML = "";
+  for (let i = 1; i <= count; i++) {
+    const row = document.createElement("div");
+    row.className = "vote-row";
+    row.innerHTML = `
+      <div></div>
+      <input type="text" placeholder="Kandidat ${i}">
+      <input type="number" min="0" placeholder="Stimmen">
+    `;
+    box.appendChild(row);
+  }
+}
+
+function createCross(handler) {
+  const c = document.createElement("div");
+  c.className = "cross";
+  c.onclick = handler;
+  return c;
+}
+
+function textInput(ph) {
+  const i = document.createElement("input");
+  i.type = "text";
+  i.placeholder = ph;
+  return i;
+}
+
+generateAll(count);
+updateCrossNotice();
 </script>
 
 </body>
