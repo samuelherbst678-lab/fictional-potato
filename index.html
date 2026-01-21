@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Wahlzettel – Web App</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f2f2f2;
+}
+
+header {
+  background: #222;
+  color: white;
+  padding: 15px;
+  text-align: center;
+}
+
+select {
+  font-size: 16px;
+  padding: 6px;
+}
+
+.page {
+  max-width: 900px;
+  margin: 20px auto;
+  background: white;
+  padding: 30px;
+  min-height: 90vh;
+}
+
+.hidden {
+  display: none;
+}
+
+h2 {
+  border-bottom: 2px solid #000;
+  padding-bottom: 5px;
+}
+
+.ballot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+}
+
+.vote-box {
+  border: 2px solid black;
+  padding: 15px;
+}
+
+.vote-item {
+  display: grid;
+  grid-template-columns: 30px 1fr 150px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.vote-item input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+}
+
+.vote-item input[type="text"],
+.vote-item input[type="number"] {
+  width: 100%;
+  padding: 4px;
+}
+
+.free-list .vote-item {
+  grid-template-columns: 30px 1fr;
+}
+
+footer {
+  text-align: center;
+  font-size: 12px;
+  margin-top: 40px;
+  color: #555;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Wahlzettel Web App</h1>
+  <label>
+    Wahlzettel-Typ:
+    <select onchange="switchBallot(this.value)">
+      <option value="bundestag">Bundestagswahl (Erst- & Zweitstimme)</option>
+      <option value="free">Freier Wahlzettel</option>
+    </select>
+  </label>
+</header>
+
+<div class="page">
+
+<!-- BUNDESTAGSWAHL -->
+<div id="bundestag">
+
+<h2>Stimmzettel zur Bundestagswahl</h2>
+
+<div class="ballot">
+
+<div class="vote-box">
+  <h3>Erststimme</h3>
+
+  <div class="vote-item">
+    <input type="checkbox">
+    <input type="text" placeholder="Name des Kandidaten">
+    <input type="text" placeholder="Partei">
+  </div>
+
+  <div class="vote-item">
+    <input type="checkbox">
+    <input type="text" placeholder="Name des Kandidaten">
+    <input type="text" placeholder="Partei">
+  </div>
+
+</div>
+
+<div class="vote-box">
+  <h3>Zweitstimme</h3>
+
+  <div class="vote-item">
+    <input type="checkbox">
+    <input type="text" placeholder="Partei">
+    <input type="text" placeholder="Kurzname">
+  </div>
+
+  <div class="vote-item">
+    <input type="checkbox">
+    <input type="text" placeholder="Partei">
+    <input type="text" placeholder="Kurzname">
+  </div>
+
+</div>
+
+</div>
+</div>
+
+<!-- FREIER WAHLZETTEL -->
+<div id="free" class="hidden">
+
+<h2>Freier Wahlzettel</h2>
+
+<p>Gesamtstimmen:
+  <input type="number" value="3" min="1">
+</p>
+
+<div class="vote-box free-list">
+
+  <div class="vote-item">
+    <input type="checkbox">
+    <input type="text" placeholder="Kandidat / Option">
+  </div>
+
+  <div class="vote-item">
+    <input type="checkbox">
+    <input type="text" placeholder="Kandidat / Option">
+  </div>
+
+  <div class="vote-item">
+    <input type="checkbox">
+    <input type="text" placeholder="Kandidat / Option">
+  </div>
+
+</div>
+
+</div>
+
+<footer>
+  Muster-Wahlzettel – keine echte Wahl
+</footer>
+
+</div>
+
+<script>
+function switchBallot(type) {
+  document.getElementById("bundestag").classList.add("hidden");
+  document.getElementById("free").classList.add("hidden");
+  document.getElementById(type).classList.remove("hidden");
+}
+</script>
+
+</body>
+</html>
